@@ -1,37 +1,38 @@
 HELPERS := ./scripts
 OUTPATH := ./bin
 
-EXEC_NAME := api
+EXEC_NAME := pocket
 
 OS := $(shell uname)
-GO_SRC := src/main.go
+GO_SRC := main.go
+GOVARS := GO111MODULE=on
 
 ifeq ($(OS),Linux)
 	# This is required to get a statically linked binary.
 	# Doing this on MacOS breaks something with networking.
-	GOVARS := $(GOVARS) CGO_ENABLED=0
+	GOVARS := $(GOVARS) CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 endif
 
 .PHONY: build build-linux check-clean ci clean dev format install-deps lint start
 
 install-deps:
-	chmod +x ./scripts/*
-	ls -l ./scripts/*
 	go mod download
 	go mod tidy
 
 build:
 	$(GOVARS) go build \
-		-ldflags '-extldflags "-static"' \
-		-o $(OUTPATH)/${EXEC_NAME} \
-		${GO_SRC}
+	-o ${EXEC_NAME} \
+	${GO_SRC}
 	
 build-linux:
-	GOOS=linux $(GOVARS) go build \
-				-ldflags '-extldflags "-static"' \
-				-o $(OUTPATH)/${EXEC_NAME} 
+	$(GOVARS) go build \
+		-ldflags '-extldflags "-static"' \
+		-o $(OUTPATH)/${EXEC_NAME} 
 
-ci: install-deps build 
+ci: install-deps build
+
+start: ci
+	./pocket serve --debug --http="$(shell ipconfig getifaddr en0):8090"
 
 check-clean:
 	# Ensures working dir is clean

@@ -35,3 +35,6 @@ __azurite_*
 # environment
 .env
 .venv
+
+# prod data
+pb_data
